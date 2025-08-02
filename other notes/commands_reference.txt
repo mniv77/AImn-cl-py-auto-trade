@@ -1,0 +1,65 @@
+
+📘 Trading Bot Command Reference (PowerShell, CMD, and Uvicorn)
+
+==========================================================
+🔧 1. Start Uvicorn (FastAPI Server)
+==========================================================
+From your project folder (e.g., pythonNotepad++):
+
+    py -m uvicorn main:app --reload
+
+- Auto-reloads when `main.py` changes
+- Runs on http://127.0.0.1:8000 by default
+
+==========================================================
+📬 2. Send Webhook via PowerShell (Local)
+==========================================================
+    Invoke-RestMethod `
+      -Uri "http://127.0.0.1:8000/webhook" `
+      -Method POST `
+      -Body '{"bot_id": "MN-COMPOUND-BOT", "secret": "supersecure123", "action": "buy", "symbol": "TSLA", "qty": 1}' `
+      -ContentType "application/json"
+
+✅ Use when testing locally without a tunnel.
+
+==========================================================
+🌐 3. Open Tunnel with Cloudflare
+==========================================================
+     ./cloudflared tunnel --url http://127.0.0.1:8000 --no-autoupdate
+- This will give you a temporary public URL like:
+  https://green-apple-bear.trycloudflare.com
+
+==========================================================
+🌐 4. Send Webhook to Tunnel (Public) /**********
+==========================================================
+    Invoke-RestMethod `
+      -Uri "https://your-subdomain.trycloudflare.com/webhook" `
+      -Method POST `
+      -Body '{"bot_id": "MN-COMPOUND-BOT", "secret": "supersecure123", "action": "enter_long", "symbol": "TSLA", "qty": 1}' `
+      -ContentType "application/json"
+
+🧠 Replace `your-subdomain` with the one you received.
+
+==========================================================
+📝 5. Send Webhook using JSON File (curl)
+==========================================================
+1. Create `test.json`:
+    {
+      "bot_id": "MN-COMPOUND-BOT",
+      "secret": "supersecure123",
+      "action": "buy",
+      "symbol": "TSLA",
+      "qty": 1
+    }
+
+2. Run in CMD or PowerShell:
+    curl -X POST http://127.0.0.1:8000/webhook -H "Content-Type: application/json" -d @test.json
+
+==========================================================
+🧰 6. Optional BAT file to Start Uvicorn
+==========================================================
+Save this as `start_bot.bat`:
+
+    @echo off
+    cd %~dp0
+    py -m uvicorn main:app --reload

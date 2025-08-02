@@ -1,0 +1,36 @@
+2025-07-29 23:28:42,377 - __main__ - INFO - AIMn Trading Engine initialized
+2025-07-29 23:28:42,378 - __main__ - INFO - Trading symbols: ['AAPL', 'MSFT', 'TSLA', 'GOOGL', 'NVDA']
+2025-07-29 23:28:42,378 - __main__ - INFO - Scan interval: 60 seconds
+2025-07-29 23:28:42,379 - __main__ - INFO - 🚀 Starting AIMn Trading Engine...
+2025-07-29 23:28:42,460 - __main__ - INFO - 📊 Initial Account Status:
+2025-07-29 23:28:42,460 - __main__ - INFO -    Buying Power: $373,093.52
+2025-07-29 23:28:42,461 - __main__ - INFO -    Portfolio Value: $99,944.75
+2025-07-29 23:28:42,536 - __main__ - INFO - 
+📈 Current Positions:
+2025-07-29 23:28:42,537 - __main__ - INFO -    NVTS: 1.0 shares @ $7.52
+2025-07-29 23:28:42,538 - __main__ - INFO -    TSLA: 53.0 shares @ $17,023.60
+2025-07-29 23:28:42,538 - __main__ - INFO - ==================================================
+2025-07-29 23:28:42,539 - __main__ - INFO - Trading cycle started at 2025-07-29 23:28:42.539901
+2025-07-29 23:28:42,617 - __main__ - INFO - ⏰ Market is CLOSED. Next open: 2025-07-30 09:30:00-04:00
+2025-07-29 23:28:42,618 - __main__ - INFO -    Using daily data for analysis...
+2025-07-29 23:28:43,040 - __main__ - ERROR - Failed to fetch data for AAPL: No data available for this symbol
+2025-07-29 23:28:43,204 - __main__ - ERROR - Failed to fetch data for MSFT: No data available for this symbol
+2025-07-29 23:28:43,368 - __main__ - ERROR - Failed to fetch data for TSLA: No data available for this symbol
+2025-07-29 23:28:43,528 - __main__ - ERROR - Failed to fetch data for GOOGL: No data available for this symbol
+2025-07-29 23:28:43,686 - __main__ - ERROR - Failed to fetch data for NVDA: No data available for this symbol
+2025-07-29 23:28:43,687 - __main__ - WARNING - No market data available
+2025-07-29 23:28:43,687 - __main__ - INFO - 
+⏳ Waiting 60 seconds until next scan...
+2025-07-29 23:29:43,688 - __main__ - INFO - ==================================================
+2025-07-29 23:29:43,688 - __main__ - INFO - Trading cycle started at 2025-07-29 23:29:43.688962
+2025-07-29 23:29:43,764 - __main__ - INFO - ⏰ Market is CLOSED. Next open: 2025-07-30 09:30:00-04:00
+2025-07-29 23:29:43,765 - __main__ - INFO -    Using daily data for analysis...
+2025-07-29 23:29:44,001 - __main__ - ERROR - Failed to fetch data for AAPL: No data available for this symbol
+2025-07-29 23:29:44,162 - __main__ - ERROR - Failed to fetch data for MSFT: No data available for this symbol
+2025-07-29 23:29:44,329 - __main__ - ERROR - Failed to fetch data for TSLA: No data available for this symbol
+2025-07-29 23:29:44,505 - __main__ - ERROR - Failed to fetch data for GOOGL: No data available for this symbol
+2025-07-29 23:29:44,666 - __main__ - ERROR - Failed to fetch data for NVDA: No data available for this symbol
+2025-07-29 23:29:44,668 - __main__ - WARNING - No market data available
+2025-07-29 23:29:44,668 - __main__ - INFO - 
+⏳ Waiting 60 seconds until next scan...
+2025-07-29 23:30:11,123 - __main__ - INFO - Keyboard interrupt received
