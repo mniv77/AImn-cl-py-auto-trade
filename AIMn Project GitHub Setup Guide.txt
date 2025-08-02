@@ -1,0 +1,70 @@
+AIMn Project GitHub Setup Guide
+This guide explains how to set up a Python-based project using GitHub, including uploading files, creating a new repository, and syncing changes. It also explains how to clone and run the project later on any computer.
+
+1. Local Project Folder
+Make sure all your project files are stored in a folder, e.g.:
+C:\Users\mniv7\Documents\meir\my-new-project\
+Example folder content:
+    • main.py
+    • scanner.py
+    • alpaca_connector.py
+    • config.py
+
+2. Create GitHub Repository
+    1. Visit: https://github.com/new
+    2. Fill out:
+        ◦ Repository name: e.g. aimn-new-project
+        ◦ Select: Public
+        ◦ DO NOT check "Initialize with README"
+    3. Click Create Repository
+    4. GitHub will show instructions like:
+       git init
+       git remote add origin https://github.com/YOUR_NAME/YOUR_REPO.git
+       ...
+
+3. Upload Files to GitHub
+Open Git Bash inside your project folder:
+cd "C:\Users\mniv7\Documents\meir\my-new-project"
+Run the Git setup:
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/YOUR_NAME/YOUR_REPO.git
+git push -u origin main
+If Git asks for a password, use your GitHub username and a personal access token (PAT) (not your password).
+
+4. Running the Project
+Local Development
+If your main.py or main_v2.py is the entry point, run it like this:
+cd "C:\Users\mniv7\Documents\meir\my-new-project"
+py main.py
+From a Cloned GitHub Repo (New Machine)
+git clone https://github.com/YOUR_NAME/YOUR_REPO.git
+cd YOUR_REPO
+py main.py
+
+5. Common Maintenance Commands
+To update GitHub with local changes:
+git add .
+git commit -m "Your message"
+git push
+To pull latest changes from GitHub:
+git pull origin main
+
+6. Optional: .gitignore
+Later in development, create a .gitignore file to exclude things like:
+__pycache__/
+*.pyc
+.env
+*.log
+*.exe
+
+7. Project Reuse Summary
+When creating a new project:
+    1. Create a new GitHub repo.
+    2. Set up your local folder.
+    3. Run Git commands to push code.
+    4. Use GitHub for backup/versioning.
+    5. Always run code locally from the project folder.
+You are now fully self-sufficient with GitHub and project setup.
