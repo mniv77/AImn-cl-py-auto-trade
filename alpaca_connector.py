@@ -1,404 +1,211 @@
-# alpaca_connector_fixed.py
+# alpaca_connector.py
 """
-Fixed version that handles after-hours data properly
+Alpaca Trading Connector for AIMn System
+Handles all broker interactions
 """
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import alpaca_trade_api as tradeapi
-from typing import Optional, Dict
 import os
 from dotenv import load_dotenv
+import alpaca_trade_api as tradeapi
+import pandas as pd
+from datetime import datetime, timedelta
+import logging
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
 
+logger = logging.getLogger(__name__)
 
-class AlpacaConnector:
-    """
-    Connect to Alpaca API - same data source as TradingView
-    """
+class AlpacaTradingConnector:
+    """Connector for Alpaca Trading API"""
     
-    def __init__(self, paper_trading: bool = True):
-        """
-        Initialize Alpaca connection
+    def __init__(self, paper_trading=True):
+        """Initialize Alpaca connection"""
         
-        Args:
-            paper_trading: Use paper account (True) or live account (False)
-        """
-        # Get credentials from environment or config
-        self.api_key = os.getenv('ALPACA_API_KEY', 'your_api_key_here')
-        self.secret_key = os.getenv('ALPACA_SECRET_KEY', 'your_secret_key_here')
+        # Get API keys from environment or .env file
+        api_key = os.getenv('ALPACA_API_KEY', 'PKIU63SSI0ZS85BQUY2E')
+        secret_key = os.getenv('ALPACA_SECRET_KEY', 'lwG2g6Hrgtd6V1oWwGjzcvdOQgMxfgAmVdgo88Pq')
         
-        # Use paper or live URL
+        # Set base URL based on paper/live trading
         if paper_trading:
-            self.base_url = 'https://paper-api.alpaca.markets'
-            print("🧪 Using Alpaca PAPER trading account")
+            base_url = 'https://paper-api.alpaca.markets'
         else:
-            self.base_url = 'https://api.alpaca.markets'
-            print("💰 Using Alpaca LIVE trading account")
+            base_url = 'https://api.alpaca.markets'
             
-        # Create connection
+        # Initialize the API
         try:
             self.api = tradeapi.REST(
-                self.api_key,
-                self.secret_key,
-                self.base_url,
+                api_key,
+                secret_key,
+                base_url,
                 api_version='v2'
             )
             
             # Test connection
             account = self.api.get_account()
-            print(f"✅ Connected to Alpaca!")
-            print(f"   Account Status: {account.status}")
-            print(f"   Buying Power: ${float(account.buying_power):,.2f}")
+            logger.info(f"✅ Connected to Alpaca ({'Paper' if paper_trading else 'Live'} Trading)")
+            logger.info(f"   Account: ${float(account.equity):,.2f}")
             
         except Exception as e:
-            print(f"❌ Failed to connect to Alpaca: {e}")
-            print("   Please check your API keys in .env file")
+            logger.error(f"❌ Failed to connect to Alpaca: {e}")
             raise
-            
-    def get_bars(self, symbol: str, timeframe: str = '1Min', limit: int = 200) -> pd.DataFrame:
-        """
-        Get historical bars - SAME as TradingView chart
-        
-        Args:
-            symbol: Stock symbol (e.g., 'AAPL')
-            timeframe: '1Min', '5Min', '15Min', '1Hour', '1Day'
-            limit: Number of bars to retrieve
-            
-        Returns:
-            DataFrame with columns: open, high, low, close, volume
-        """
-        print(f"\n📊 Fetching {symbol} data from Alpaca...")
-        print(f"   Timeframe: {timeframe}")
-        print(f"   Bars requested: {limit}")
-        
+    
+    def get_account_info(self):
+        """Get account information"""
         try:
-            # Convert timeframe to Alpaca format
-            timeframe_map = {
-                '1Min': tradeapi.TimeFrame.Minute,
-                '5Min': tradeapi.TimeFrame(5, tradeapi.TimeFrameUnit.Minute),
-                '15Min': tradeapi.TimeFrame(15, tradeapi.TimeFrameUnit.Minute),
-                '1Hour': tradeapi.TimeFrame.Hour,
-                '1Day': tradeapi.TimeFrame.Day
-            }
-            
-            alpaca_timeframe = timeframe_map.get(timeframe, tradeapi.TimeFrame.Minute)
-            
-            # Get bars without specifying start time - let Alpaca handle it
-            bars = self.api.get_bars(
-                symbol,
-                alpaca_timeframe,
-                limit=limit,
-                adjustment='raw'  # Same as TradingView
-            ).df
-            
-            # Check if we got any data
-            if len(bars) == 0:
-                print(f"⚠️  No data returned for {timeframe}. Market might be closed.")
-                print("   Trying daily timeframe instead...")
-                
-                # Try daily bars as fallback
-                bars = self.api.get_bars(
-                    symbol,
-                    tradeapi.TimeFrame.Day,
-                    limit=limit,
-                    adjustment='raw'
-                ).df
-                
-                if len(bars) == 0:
-                    raise Exception("No data available for this symbol")
-            
-            # Ensure column names match our system
-            bars = bars.rename(columns={
-                'open': 'open',
-                'high': 'high',
-                'low': 'low',
-                'close': 'close',
-                'volume': 'volume'
-            })
-            
-            print(f"✅ Retrieved {len(bars)} bars")
-            if len(bars) > 0:
-                print(f"   Latest close: ${bars['close'].iloc[-1]:.2f}")
-                print(f"   Time: {bars.index[-1]}")
-            
-            return bars
-            
-        except Exception as e:
-            print(f"❌ Error fetching data: {e}")
-            raise
-            
-    def get_latest_price(self, symbol: str) -> float:
-        """
-        Get current price for a symbol
-        
-        Args:
-            symbol: Stock symbol
-            
-        Returns:
-            Current price
-        """
-        try:
-            trade = self.api.get_latest_trade(symbol)
-            return float(trade.price)
-        except Exception as e:
-            print(f"❌ Error getting price for {symbol}: {e}")
-            raise
-            
-    def get_account_info(self) -> Dict:
-        """
-        Get account information
-        
-        Returns:
-            Dictionary with account details
-        """
-        account = self.api.get_account()
-        
-        return {
-            'buying_power': float(account.buying_power),
-            'portfolio_value': float(account.portfolio_value),
-            'cash': float(account.cash),
-            'pattern_day_trader': account.pattern_day_trader,
-            'trading_blocked': account.trading_blocked,
-            'account_blocked': account.account_blocked
-        }
-        
-    def place_order(self, symbol: str, side: str, qty: float, 
-                   order_type: str = 'market', limit_price: Optional[float] = None) -> Dict:
-        """
-        Place an order through Alpaca
-        
-        Args:
-            symbol: Stock symbol
-            side: 'buy' or 'sell'
-            qty: Number of shares
-            order_type: 'market' or 'limit'
-            limit_price: Price for limit orders
-            
-        Returns:
-            Order details
-        """
-        try:
-            if order_type == 'market':
-                order = self.api.submit_order(
-                    symbol=symbol,
-                    qty=qty,
-                    side=side,
-                    type='market',
-                    time_in_force='gtc' if '/' in symbol else 'day'
-                )
-            else:
-                order = self.api.submit_order(
-                    symbol=symbol,
-                    qty=qty,
-                    side=side,
-                    type='limit',
-                    time_in_force='gtc' if '/' in symbol else 'day',
-                    limit_price=limit_price
-                )
-                
-            print(f"✅ Order placed: {side.upper()} {qty} {symbol}")
-            print(f"   Order ID: {order.id}")
-            
+            account = self.api.get_account()
             return {
-                'id': order.id,
-                'symbol': order.symbol,
-                'qty': order.qty,
-                'side': order.side,
-                'type': order.type,
-                'status': order.status
+                'buying_power': float(account.buying_power),
+                'cash': float(account.cash),
+                'portfolio_value': float(account.equity),
+                'day_trading_buying_power': float(account.daytrading_buying_power),
+                'pattern_day_trader': account.pattern_day_trader
             }
+        except Exception as e:
+            logger.error(f"Error getting account info: {e}")
+            raise
+    
+    def get_positions(self):
+        """Get all current positions"""
+        try:
+            positions = self.api.list_positions()
+            
+            if not positions:
+                return pd.DataFrame()
+            
+            data = []
+            for pos in positions:
+                data.append({
+                    'symbol': pos.symbol,
+                    'qty': float(pos.qty),
+                    'side': pos.side,
+                    'market_value': float(pos.market_value),
+                    'cost_basis': float(pos.cost_basis),
+                    'unrealized_pl': float(pos.unrealized_pl),
+                    'unrealized_plpc': float(pos.unrealized_plpc),
+                    'current_price': float(pos.current_price),
+                    'avg_entry_price': float(pos.avg_entry_price)
+                })
+            
+            return pd.DataFrame(data)
             
         except Exception as e:
-            print(f"❌ Order failed: {e}")
-            raise
-            
-    def get_positions(self) -> pd.DataFrame:
-        """
-        Get current positions
-        
-        Returns:
-            DataFrame with position details
-        """
-        positions = self.api.list_positions()
-        
-        if not positions:
+            logger.error(f"Error getting positions: {e}")
             return pd.DataFrame()
-            
-        data = []
-        for pos in positions:
-            data.append({
-                'symbol': pos.symbol,
-                'qty': float(pos.qty),
-                'side': pos.side,
-                'market_value': float(pos.market_value),
-                'cost_basis': float(pos.cost_basis),
-                'unrealized_pl': float(pos.unrealized_pl),
-                'unrealized_plpc': float(pos.unrealized_plpc)
-            })
-            
-        return pd.DataFrame(data)
-        
-    def is_tradable(self, symbol: str) -> bool:
-        """
-        Check if a symbol is tradable
-        
-        Args:
-            symbol: Stock symbol
-            
-        Returns:
-            True if tradable
-        """
-        try:
-            asset = self.api.get_asset(symbol)
-            return asset.tradable and asset.status == 'active'
-        except:
-            return False
-
-
-# Specialized connector for our trading system
-class AlpacaTradingConnector(AlpacaConnector):
-    """
-    Extended connector with our trading system features
-    """
     
-    def __init__(self, paper_trading: bool = True):
-        super().__init__(paper_trading)
-        
-    def get_data_for_validation(self, symbol: str, bars: int = 200) -> pd.DataFrame:
-        """
-        Get data formatted for Pine Script validation
-        
-        Args:
-            symbol: Stock symbol
-            bars: Number of bars
-            
-        Returns:
-            DataFrame ready for indicator calculation
-        """
-        # Try 1-minute bars first, fall back to daily if needed
+    def place_order(self, symbol, qty, side, order_type='market', limit_price=None):
+        """Place an order"""
         try:
-            df = self.get_bars(symbol, '1Min', bars)
-        except:
-            print("   Falling back to daily data...")
-            df = self.get_bars(symbol, '1Day', bars)
-        
-        # Add any additional data needed
-        df['symbol'] = symbol
-        
-        # Display summary
-        print(f"\n📊 Data Summary for {symbol}:")
-        print(f"   Bars: {len(df)}")
-        if len(df) > 0:
-            print(f"   Date Range: {df.index[0]} to {df.index[-1]}")
-            print(f"   Current Close: ${df['close'].iloc[-1]:.2f}")
-        
-        return df
-        
-    def get_latest_bars(self, symbol: str, count: int = 200) -> pd.DataFrame:
-        """
-        Get latest bars for live trading (matches scanner interface)
-        
-        Args:
-            symbol: Stock symbol
-            count: Number of bars
+            # Clean symbol format for Alpaca
+            alpaca_symbol = symbol.replace('/', '')  # BTC/USD -> BTCUSD
             
-        Returns:
-            DataFrame with OHLCV data
-        """
-        # During market hours, use 1Min; after hours, use daily
-        try:
-            return self.get_bars(symbol, '1Min', count)
-        except:
-            return self.get_bars(symbol, '1Day', count)
-        
-    def get_current_price(self, symbol: str) -> float:
-        """
-        Get current price (matches position manager interface)
-        
-        Args:
-            symbol: Stock symbol
+            order = self.api.submit_order(
+                symbol=alpaca_symbol,
+                qty=qty,
+                side=side,
+                type=order_type,
+                time_in_force='gtc',
+                limit_price=limit_price
+            )
             
-        Returns:
-            Current price
-        """
-        return self.get_latest_price(symbol)
-
-
-# Test connection
-def test_alpaca_connection():
-    """
-    Test Alpaca connection and data retrieval
-    """
-    print("\n" + "="*60)
-    print("🚀 TESTING ALPACA CONNECTION")
-    print("="*60)
+            logger.info(f"✅ Order placed: {side} {qty} {symbol}")
+            return order
+            
+        except Exception as e:
+            logger.error(f"❌ Error placing order: {e}")
+            raise
     
-    # Create connector
+    def get_bars(self, symbol, timeframe, limit=200):
+        """Get historical bars for a symbol"""
+        try:
+            # Clean symbol format
+            alpaca_symbol = symbol.replace('/', '')
+            
+            # For crypto, use get_crypto_bars
+            if '/' in symbol:
+                end_time = datetime.now()
+                start_time = end_time - timedelta(days=2)
+                
+                bars = self.api.get_crypto_bars(
+                    alpaca_symbol,
+                    timeframe,
+                    start=start_time.isoformat(),
+                    end=end_time.isoformat(),
+                    limit=limit
+                ).df
+            else:
+                # For stocks
+                bars = self.api.get_bars(
+                    alpaca_symbol,
+                    timeframe,
+                    limit=limit
+                ).df
+            
+            if bars is not None and not bars.empty:
+                bars = bars.reset_index()
+                # Standardize column names
+                bars.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume', 'trade_count', 'vwap']
+                # Keep only needed columns
+                bars = bars[['timestamp', 'open', 'high', 'low', 'close', 'volume']]
+                return bars
+            else:
+                return pd.DataFrame()
+                
+        except Exception as e:
+            logger.error(f"Error getting bars for {symbol}: {e}")
+            return pd.DataFrame()
+    
+    def cancel_all_orders(self):
+        """Cancel all open orders"""
+        try:
+            self.api.cancel_all_orders()
+            logger.info("✅ All open orders cancelled")
+        except Exception as e:
+            logger.error(f"Error cancelling orders: {e}")
+    
+    def close_all_positions(self):
+        """Close all positions"""
+        try:
+            self.api.close_all_positions()
+            logger.info("✅ All positions closed")
+        except Exception as e:
+            logger.error(f"Error closing positions: {e}")
+    
+    def get_clock(self):
+        """Get market clock"""
+        try:
+            return self.api.get_clock()
+        except Exception as e:
+            logger.error(f"Error getting clock: {e}")
+            raise
+
+
+# Test the connection
+if __name__ == "__main__":
+    print("Testing Alpaca Connection...")
+    
+    # Test paper trading connection
     connector = AlpacaTradingConnector(paper_trading=True)
     
-    # Test data retrieval
-    symbol = 'AAPL'
-    df = connector.get_data_for_validation(symbol)
-    
-    # Show sample data
-    if len(df) > 0:
-        print(f"\nSample data (last 5 bars):")
-        print(df.tail())
-    
-    # Test current price
-    try:
-        current_price = connector.get_current_price(symbol)
-        print(f"\nCurrent {symbol} price: ${current_price:.2f}")
-    except:
-        print(f"\nCouldn't get real-time price (market might be closed)")
-    
-    # Show account info
+    # Get account info
     account = connector.get_account_info()
-    print(f"\nAccount Info:")
+    print(f"\n💰 Account Status:")
     print(f"   Buying Power: ${account['buying_power']:,.2f}")
     print(f"   Portfolio Value: ${account['portfolio_value']:,.2f}")
     
-    # Check market status
-    clock = connector.api.get_clock()
-    print(f"\nMarket Status:")
-    print(f"   Is Open: {clock.is_open}")
-    print(f"   Next Open: {clock.next_open}")
-    print(f"   Next Close: {clock.next_close}")
+    # Get positions
+    positions = connector.get_positions()
+    if not positions.empty:
+        print(f"\n📈 Current Positions:")
+        print(positions)
+    else:
+        print("\n📈 No open positions")
     
-    print("\n✅ Alpaca connection successful!")
-    
-
-# Create .env template
-def create_env_template():
-    """
-    Create template for API keys
-    """
-    template = """# Alpaca API Configuration
-# Get your keys from: https://alpaca.markets/
-
-# Paper Trading Keys
-ALPACA_API_KEY=your_paper_api_key_here
-ALPACA_SECRET_KEY=your_paper_secret_key_here
-
-# Live Trading Keys (when ready)
-# ALPACA_LIVE_API_KEY=your_live_api_key_here
-# ALPACA_LIVE_SECRET_KEY=your_live_secret_key_here
-"""
-    
-    if not os.path.exists('.env'):
-        with open('.env', 'w') as f:
-            f.write(template)
-        print("📄 Created .env file template")
-        print("   Please add your Alpaca API keys to .env file")
-    
-
-if __name__ == "__main__":
-    # Create .env template if needed
-    create_env_template()
-    
-    # Test connection
-    test_alpaca_connection()
+    # Test getting bars
+    print("\n📊 Testing market data...")
+    bars = connector.get_bars('BTC/USD', '1Min', limit=5)
+    if not bars.empty:
+        print(f"✅ Got {len(bars)} bars for BTC/USD")
+        print(f"   Latest price: ${bars['close'].iloc[-1]:,.2f}")
+    else:
+        print("❌ No data returned")
