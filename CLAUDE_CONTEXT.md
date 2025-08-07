@@ -104,5 +104,40 @@
 - Currently using Alpaca API but may consider other exchanges
 - [Add any other important context]
 
+## How to Reach Claude with Full Capabilities
+### Identifying Claude
+- **Who**: Claude is an AI assistant created by Anthropic
+- **Verify by asking**: "Are you Claude by Anthropic?"
+- **Test capabilities**: Ask Claude to fetch this GitHub repository - only Claude with full capabilities can do this
+
+### Where to Find Claude with Web Fetching
+1. **Claude.ai (RECOMMENDED)**
+   - URL: https://claude.ai
+   - Available as: Web app, iOS app, Android app, Desktop app
+   - ✅ Supports web fetching and reading GitHub repositories
+   - ✅ Can read your CLAUDE_CONTEXT.md file directly
+
+2. **Anthropic API**
+   - For developers/advanced users
+   - Model: `claude-opus-4-20250514` (most capable)
+   - Requires API integration
+
+3. **What to Say When Starting a New Conversation**
+   ```
+   "Hi Claude, I have a crypto trading bot project. Please fetch and read the 
+   CLAUDE_CONTEXT.md file from https://github.com/mniv77/aimn-trade-final 
+   to understand my project context."
+   ```
+
+### ⚠️ Important Limitations
+- **No Memory**: Claude cannot remember previous conversations
+- **Always provide context**: Share the GitHub URL and mention CLAUDE_CONTEXT.md
+- **Not all "Claude" interfaces are equal**: Some third-party integrations may lack web fetching
+
+### Quick Test for Full Capabilities
+Ask: "Can you fetch and read files from my GitHub repository at https://github.com/mniv77/aimn-trade-final?"
+- If YES → You have Claude with full capabilities
+- If NO → You may need to use claude.ai directly
+
 ---
 *Remember to update this file after each development session!*
